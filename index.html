@@ -1,40 +1,387 @@
-from manim import *
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Text Motion Generator</title>
+    <style>
+        :root {
+            --bg-color: #0a0f0d;
+            --accent-color: #00ff88;
+            --text-color: #ffffff;
+            --panel-bg: #1a1f1d;
+        }
 
-class TextMotionApp(Scene):
-    def construct(self):
-        # 1. TERIMA INPUT DARI PENGGUNA (Bisa diganti variabel dinamis)
-        teks_baris_1 = "HIDUP"
-        teks_baris_2 = "JOKOWI"
-        
-        # 2. SETUP GAYA (STYLE)
-        # Membuat teks dengan font tebal dan warna sesuai video contoh
-        t1 = Text(teks_baris_1, font="Arial", weight=BOLD, font_size=96, color=TEAL_C)
-        t2 = Text(teks_baris_2, font="Arial", weight=BOLD, font_size=96, color=WHITE)
-        
-        # Garis bawah dekoratif (seperti di video)
-        garis = Line(start=LEFT, end=RIGHT, color=GREEN).width(4).next_to(t2, DOWN)
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-        # Mengatur posisi (Grouping)
-        grup_teks = VGroup(t1, t2).arrange(DOWN, buff=0.2)
+        h2 { margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* CONTROL PANEL */
+        .controls {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 90%;
+            max-width: 800px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+        }
+
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; }
         
-        # 3. BACKGROUND (Opsional: Meniru efek gelap/partikel)
-        self.camera.background_color = "#0f1712" # Hijau tua sangat gelap
+        input, select {
+            background: #000;
+            border: 1px solid #444;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        input:focus { outline: 2px solid var(--accent-color); border-color: transparent; }
+
+        .full-width { grid-column: span 2; }
+
+        /* BUTTONS */
+        .btn-group {
+            grid-column: span 2;
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .btn-preview { background-color: #333; color: white; }
+        .btn-preview:hover { background-color: #444; }
+
+        .btn-record { 
+            background-color: var(--accent-color); 
+            color: #000; 
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        }
+        .btn-record:hover { background-color: #00cc6a; transform: scale(1.02); }
+        .btn-record:disabled { background-color: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* PREVIEW AREA */
+        #canvas-container {
+            width: 90%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            border: 1px solid #333;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Loading Indicator */
+        #recording-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: none;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <h2>Text Motion Studio</h2>
+
+    <div class="controls">
+        <div class="input-group">
+            <label>Teks Baris 1</label>
+            <input type="text" id="text1" value="HIDUP">
+        </div>
+        <div class="input-group">
+            <label>Teks Baris 2</label>
+            <input type="text" id="text2" value="INDONESIA">
+        </div>
         
-        # 4. DEFINISI MOTION (ANIMASI)
-        # Animasi 1: Fade In + Geser Sedikit (Slide)
-        self.play(
-            FadeIn(t1, shift=UP),
-            FadeIn(t2, shift=UP),
-            Create(garis),
-            run_time=1.5
-        )
+        <div class="input-group">
+            <label>Resolusi Output</label>
+            <select id="resolution">
+                <option value="1280,720">HD (1280x720) - Ringan</option>
+                <option value="1920,1080">Full HD (1920x1080) - Tajam</option>
+            </select>
+        </div>
         
-        # Animasi 2: Sedikit "Zoom" (Scale) untuk efek dramatis
-        self.play(
-            grup_teks.animate.scale(1.1),
-            garis.animate.width(5),
-            run_time=3
-        )
+        <div class="input-group">
+            <label>Warna Aksen</label>
+            <input type="color" id="accentColor" value="#00ff88" style="height: 45px; cursor: pointer;">
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-preview" onclick="startPreview()">▶ Putar Preview</button>
+            <button class="btn-record" id="btnRecord" onclick="startRecording()">● Rekam & Download Video</button>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <div id="recording-status">● REC</div>
+        <canvas id="motionCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('motionCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        let particles = [];
         
-        # Animasi 3: Fade Out
-        self.play(FadeOut(grup_teks), FadeOut(garis))
+        // Konfigurasi Animasi
+        const CONFIG = {
+            duration: 180, // Frame (60fps * 3 detik)
+            fps: 60
+        };
+
+        // Inisialisasi Canvas
+        function resizeCanvas() {
+            const res = document.getElementById('resolution').value.split(',');
+            canvas.width = parseInt(res[0]);
+            canvas.height = parseInt(res[1]);
+        }
+
+        // Setup Partikel (Debu melayang)
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2,
+                    speedY: Math.random() * -0.5 - 0.1, // Bergerak ke atas pelan
+                    opacity: Math.random() * 0.5
+                });
+            }
+        }
+
+        // Fungsi Easing (Agar gerakan halus tidak kaku)
+        function easeOutExpo(x) {
+            return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+        }
+
+        function drawFrame(frame) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const t = Math.min(frame / 100, 1); // Progress animasi (0 sampai 1)
+            const easedT = easeOutExpo(t);
+            
+            // Ambil Input User
+            const text1 = document.getElementById('text1').value.toUpperCase();
+            const text2 = document.getElementById('text2').value.toUpperCase();
+            const accent = document.getElementById('accentColor').value;
+
+            // 1. Clear Background
+            // Buat gradient background gelap
+            const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
+            gradient.addColorStop(0, "#1a2520"); // Tengah sedikit terang
+            gradient.addColorStop(1, "#000000"); // Pinggir hitam pekat
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Gambar Partikel
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            particles.forEach(p => {
+                p.y += p.speedY;
+                if (p.y < 0) p.y = height; // Reset ke bawah jika lewat atas
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Setup Font
+            const fontSize1 = width * 0.08; // Ukuran font responsif
+            const fontSize2 = width * 0.08;
+            ctx.textAlign = "center";
+            
+            // Posisi Tengah
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // 3. Gambar Teks 1 (Atas) - Animasi Geser dari Bawah
+            ctx.font = `900 ${fontSize1}px 'Arial Black', sans-serif`;
+            ctx.fillStyle = "#2a6e55"; // Warna bayangan teks
+            
+            // Hitung posisi Y dengan animasi
+            // Mulai dari bawah (centerY + 50), naik ke posisi asli (centerY - 40)
+            const startY1 = centerY + 50;
+            const endY1 = centerY - (fontSize1 * 0.6);
+            const currentY1 = startY1 - ((startY1 - endY1) * easedT);
+
+            // Efek Opacity (Fade In)
+            ctx.globalAlpha = easedT;
+
+            // Gambar Teks 1 (Warna utama Teal Gelap seperti contoh)
+            ctx.fillStyle = "#1e8568"; 
+            ctx.fillText(text1, centerX, currentY1);
+            
+            // Glow effect tipis
+            ctx.shadowColor = accent;
+            ctx.shadowBlur = 10 * easedT;
+            ctx.fillText(text1, centerX, currentY1);
+            ctx.shadowBlur = 0; // Reset shadow
+
+            // 4. Gambar Teks 2 (Bawah) - Animasi Geser dari Bawah (sedikit delay)
+            const t2 = Math.min(Math.max(frame - 20, 0) / 100, 1); // Delay 20 frame
+            const easedT2 = easeOutExpo(t2);
+            
+            ctx.font = `900 ${fontSize2}px 'Arial Black', sans-serif`;
+            ctx.fillStyle = "#ffffff";
+            
+            const startY2 = centerY + 100;
+            const endY2 = centerY + (fontSize2 * 0.8);
+            const currentY2 = startY2 - ((startY2 - endY2) * easedT2);
+
+            ctx.globalAlpha = easedT2;
+            ctx.fillText(text2, centerX, currentY2);
+
+            // 5. Gambar Garis Aksen (Hijau) - Animasi Melebar (Scale Width)
+            const t3 = Math.min(Math.max(frame - 40, 0) / 80, 1); // Delay 40 frame
+            const easedT3 = easeOutExpo(t3);
+
+            const lineWidth = (width * 0.3) * easedT3;
+            const lineHeight = width * 0.008; // Ketebalan garis
+            const lineY = currentY2 + 30;
+
+            ctx.fillStyle = accent;
+            ctx.globalAlpha = 1;
+            
+            // Gambar garis di tengah
+            if (lineWidth > 0) {
+                ctx.shadowColor = accent;
+                ctx.shadowBlur = 20;
+                ctx.fillRect(centerX - (lineWidth / 2), lineY, lineWidth, lineHeight);
+                ctx.shadowBlur = 0;
+            }
+
+            // Loop animation jika preview
+            if (window.isRecording) {
+                // Jangan loop kalau recording
+            } else {
+                if (frame > CONFIG.duration + 60) { // +60 frame untuk jeda diam
+                    startPreview(); // Restart
+                    return; 
+                }
+            }
+        }
+
+        // --- ENGINE UTAMA ---
+
+        function startPreview() {
+            window.isRecording = false;
+            resizeCanvas();
+            initParticles();
+            if (animationId) cancelAnimationFrame(animationId);
+            
+            let frame = 0;
+            function loop() {
+                drawFrame(frame);
+                frame++;
+                animationId = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // --- FUNGSI REKAM VIDEO ---
+        
+        function startRecording() {
+            const btn = document.getElementById('btnRecord');
+            const status = document.getElementById('recording-status');
+            
+            btn.disabled = true;
+            btn.innerText = "Sedang Merekam...";
+            status.style.display = "block";
+            window.isRecording = true;
+
+            resizeCanvas();
+            initParticles();
+            if (animationId) cancelAnimationFrame(animationId);
+
+            // Setup Media Recorder
+            const stream = canvas.captureStream(60); // 60 FPS
+            const chunks = [];
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+
+            recorder.ondataavailable = e => chunks.push(e.data);
+            
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                
+                // Trigger Download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Motion_Text_${Date.now()}.webm`;
+                a.click();
+                
+                // Reset UI
+                btn.disabled = false;
+                btn.innerText = "● Rekam & Download Video";
+                status.style.display = "none";
+                startPreview(); // Kembali ke mode preview
+            };
+
+            recorder.start();
+
+            // Jalankan animasi frame demi frame untuk rekaman
+            let frame = 0;
+            function recordLoop() {
+                drawFrame(frame);
+                frame++;
+                
+                if (frame <= CONFIG.duration + 60) {
+                    requestAnimationFrame(recordLoop);
+                } else {
+                    recorder.stop(); // Stop jika durasi habis
+                }
+            }
+            recordLoop();
+        }
+
+        // Jalankan saat pertama load
+        window.onload = startPreview;
+
+    </script>
+</body>
+</html>
