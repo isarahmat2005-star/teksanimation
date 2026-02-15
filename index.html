@@ -2,330 +2,228 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Motion Engine Core</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion Text Engine Core</title>
     <style>
-        /* DASHBOARD LAYOUT - BERSIH & FUNGSIONAL */
-        body { font-family: sans-serif; background: #111; color: #eee; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        /* CSS DASAR (Hanya untuk layout, bukan kosmetik berat) */
+        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; height: 100vh; margin: 0; }
         
-        /* Sidebar: Pusat Kontrol Fitur */
-        .sidebar { width: 320px; background: #1a1a1a; padding: 20px; border-right: 1px solid #333; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .group { border: 1px solid #333; padding: 15px; border-radius: 8px; background: #222; }
-        .group-title { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
-        
-        label { display: block; font-size: 13px; margin-bottom: 5px; color: #ccc; }
-        input[type="text"], select, input[type="number"] {
-            width: 100%; padding: 8px; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box;
-        }
-        
-        /* Main Area: Preview & Telemetry */
-        .main { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px; background: #000; }
-        
-        .preview-box { 
-            flex: 1; border: 1px dashed #444; display: flex; justify-content: center; align-items: center; 
-            background-image: linear-gradient(45deg, #111 25%, transparent 25%), linear-gradient(-45deg, #111 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111 75%), linear-gradient(-45deg, transparent 75%, #111 75%);
-            background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; /* Checkerboard pattern */
-        }
-        
-        canvas { box-shadow: 0 0 20px rgba(0,0,0,0.8); max-width: 100%; max-height: 100%; }
+        /* LAYOUT: Kiri (Kontrol), Tengah (Preview), Bawah (Log) */
+        .sidebar { width: 300px; padding: 20px; background: #252525; border-right: 1px solid #444; display: flex; flex-direction: column; gap: 15px; }
+        .main-area { flex: 1; display: flex; flex-direction: column; }
+        .preview-box { flex: 1; background: black; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+        .telemetry-panel { height: 150px; background: #000; padding: 10px; font-family: monospace; border-top: 1px solid #333; overflow-y: auto; font-size: 12px; color: #0f0; }
 
-        /* Console Log / Telemetry Real */
-        .console-log { height: 150px; background: #0a0a0a; border: 1px solid #333; padding: 10px; font-family: monospace; font-size: 12px; overflow-y: auto; color: #0f0; }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #111; padding-bottom: 2px; }
-        .log-time { color: #666; margin-right: 10px; }
+        /* KOMPONEN INPUT */
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 12px; color: #aaa; font-weight: bold; text-transform: uppercase; }
+        input, select, button { padding: 10px; background: #333; border: 1px solid #555; color: white; border-radius: 4px; }
+        button { background: #007bff; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #555; cursor: not-allowed; }
 
-        button.primary { background: #007bff; color: white; border: none; padding: 12px; width: 100%; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        button.primary:hover { background: #0056b3; }
-        button.primary:disabled { background: #444; cursor: not-allowed; }
+        /* --- LOGIKA VISUAL (Engine Animasi) --- */
+        
+        /* 1. Base Text */
+        .motion-text { font-size: 60px; text-align: center; position: relative; z-index: 10; }
+        .char { display: inline-block; transition: all 0.3s; }
+
+        /* 2. Style: Typography */
+        .font-bold { font-family: 'Arial Black', sans-serif; font-weight: 900; }
+        .font-thin { font-family: 'Courier New', monospace; font-weight: 100; letter-spacing: 5px; }
+        .font-tech { font-family: 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* 3. Animation: Types */
+        /* Animasi: Floating */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .anim-float .char { animation: float 3s ease-in-out infinite; }
+        
+        /* Animasi: Shake/Glitch */
+        @keyframes shake { 0% { transform: translate(0,0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(2px, -2px); } 100% { transform: translate(0,0); } }
+        .anim-shake .char { animation: shake 0.5s infinite; color: cyan; text-shadow: 2px 0 red; }
+
+        /* Animasi: Fade In */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .anim-fade .char { animation: fadeIn 0.8s forwards; opacity: 0; }
+
+        /* 4. Overlay Layers */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; opacity: 0.3; }
+        .scanlines { background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.5)); background-size: 100% 4px; }
+        .vignette { background: radial-gradient(circle, transparent 50%, black 100%); opacity: 0.8; }
+
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2 style="margin:0 0 10px 0;">Motion Engine</h2>
+        <h3>ENGINE CONTROLS</h3>
         
-        <div class="group">
-            <div class="group-title">Text Content</div>
-            <label>Headline</label>
-            <input type="text" id="inpText" value="MOTION APP">
-            <label style="margin-top:10px">Sub-Headline</label>
-            <input type="text" id="inpSub" value="FEATURE TEST">
+        <div class="control-group">
+            <label>Headline Text</label>
+            <input type="text" id="TextInput" value="MOTION TEXT" placeholder="Masukkan teks...">
         </div>
 
-        <div class="group">
-            <div class="group-title">Visual Engine</div>
-            <label>Animation Style</label>
-            <select id="selAnim">
-                <option value="pulse">Pulse (Denyut)</option>
-                <option value="shake">Shake (Gempa)</option>
-                <option value="slide">Slide Up (Geser)</option>
-            </select>
-            
-            <label style="margin-top:10px">Background Effect</label>
-            <select id="selBg">
-                <option value="solid">Solid Color</option>
-                <option value="grid">Cyber Grid</option>
-                <option value="particles">Floating Particles</option>
+        <div class="control-group">
+            <label>Typography Style</label>
+            <select id="StyleSelect">
+                <option value="font-bold">Bold Impact</option>
+                <option value="font-thin">Minimalist Code</option>
+                <option value="font-tech">Tech Modern</option>
             </select>
         </div>
 
-        <div class="group">
-            <div class="group-title">Overlay Layer</div>
-            <label>
-                <input type="checkbox" id="chkScanline" checked> CRT Scanlines
-            </label>
-            <label>
-                <input type="checkbox" id="chkVignette"> Dark Vignette
-            </label>
-        </div>
-
-        <div class="group">
-            <div class="group-title">Render Settings</div>
-            <label>Resolution</label>
-            <select id="selRes">
-                <option value="1280,720">HD (1280x720)</option>
-                <option value="1920,1080">FHD (1920x1080)</option>
-            </select>
-            <label style="margin-top:10px">FPS</label>
-            <select id="selFps">
-                <option value="30">30 FPS</option>
-                <option value="60" selected>60 FPS</option>
+        <div class="control-group">
+            <label>Animation Engine</label>
+            <select id="AnimSelect">
+                <option value="anim-fade">Simple Fade</option>
+                <option value="anim-float">Floating Particles</option>
+                <option value="anim-shake">Glitch / Shake</option>
             </select>
         </div>
 
-        <button class="primary" onclick="app.startExport()">GENERATE VIDEO</button>
+        <div class="control-group">
+            <label>Overlay Effect</label>
+            <select id="OverlaySelect">
+                <option value="">None</option>
+                <option value="scanlines">CRT Scanlines</option>
+                <option value="vignette">Cinema Vignette</option>
+            </select>
+        </div>
+
+        <div style="margin-top: auto;">
+            <button id="GenerateBtn" style="width: 100%; height: 50px;">GENERATE RENDER</button>
+        </div>
     </div>
 
-    <div class="main">
-        <div class="preview-box">
-            <canvas id="stage"></canvas>
+    <div class="main-area">
+        
+        <div class="preview-box" id="PreviewContainer">
+            <div id="OverlayLayer" class="overlay"></div>
+            <div id="TextDisplay" class="motion-text font-bold">
+                </div>
         </div>
-        <div class="console-log" id="sysLog">
-            <div class="log-entry"><span class="log-time">SYSTEM</span> Engine Initialized.</div>
+
+        <div class="telemetry-panel" id="LogPanel">
+            <div>> System Initialized...</div>
+            <div>> Ready for input.</div>
         </div>
     </div>
 
     <script>
-        // --- MODULE: TELEMETRY (LOG SISTEM) ---
-        const Logger = {
-            el: document.getElementById('sysLog'),
-            info: function(msg) {
-                const time = new Date().toLocaleTimeString();
-                const div = document.createElement('div');
-                div.className = 'log-entry';
-                div.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
-                this.el.prepend(div);
-            }
-        };
+        // --- 1. INISIALISASI VARIABEL ---
+        const textInput = document.getElementById('TextInput');
+        const styleSelect = document.getElementById('StyleSelect');
+        const animSelect = document.getElementById('AnimSelect');
+        const overlaySelect = document.getElementById('OverlaySelect');
+        const generateBtn = document.getElementById('GenerateBtn');
+        
+        const textDisplay = document.getElementById('TextDisplay');
+        const overlayLayer = document.getElementById('OverlayLayer');
+        const logPanel = document.getElementById('LogPanel');
 
-        // --- MODULE: GRAPHICS ENGINE (CANVAS) ---
-        const Graphics = {
-            canvas: document.getElementById('stage'),
-            ctx: document.getElementById('stage').getContext('2d'),
-            width: 1280,
-            height: 720,
-            frame: 0,
+        // --- 2. FUNGSI INTI (ENGINE) ---
+
+        // Fungsi: System Logger (Fitur Telemetry)
+        // Mencatat setiap aktivitas user ke panel bawah
+        function systemLog(message) {
+            const time = new Date().toLocaleTimeString();
+            const logLine = document.createElement('div');
+            logLine.innerHTML = `<span style="color:#888">[${time}]</span> ${message}`;
+            logPanel.prepend(logLine); // Taruh log terbaru di atas
+        }
+
+        // Fungsi: Render Teks (Fitur Text Engine)
+        // Memecah teks jadi huruf per huruf agar bisa dianimasikan
+        function updateEngine() {
+            const rawText = textInput.value;
+            const selectedFont = styleSelect.value;
+            const selectedAnim = animSelect.value;
+            const selectedOverlay = overlaySelect.value;
+
+            // 1. Reset Class Container
+            textDisplay.className = `motion-text ${selectedFont} ${selectedAnim}`;
             
-            // State
-            config: {
-                text: "", sub: "", anim: "pulse", bg: "grid", 
-                scanline: true, vignette: false
-            },
+            // 2. Update Overlay
+            overlayLayer.className = `overlay ${selectedOverlay}`;
 
-            resize: function(w, h) {
-                this.canvas.width = w;
-                this.canvas.height = h;
-                this.width = w;
-                this.height = h;
-                Logger.info(`Resolution changed to ${w}x${h}`);
-            },
-
-            // Fungsi Utama Render (Looping 60x per detik)
-            render: function() {
-                const ctx = this.ctx;
-                const w = this.width;
-                const h = this.height;
-                const t = this.frame;
-
-                // 1. CLEAR & BACKGROUND
-                ctx.fillStyle = "#111";
-                ctx.fillRect(0,0,w,h);
-
-                // Fitur: Background Effect
-                if(this.config.bg === 'grid') this.drawGrid(ctx, w, h, t);
-                if(this.config.bg === 'particles') this.drawParticles(ctx, w, h, t);
-
-                // 2. TEXT ANIMATION LOGIC
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                let scale = 1;
-                let offsetX = 0;
-                let offsetY = 0;
-
-                // Fitur: Animation Selector
-                if(this.config.anim === 'pulse') {
-                    scale = 1 + Math.sin(t * 0.05) * 0.05; // Membesar mengecil
-                } else if(this.config.anim === 'shake') {
-                    offsetX = (Math.random() - 0.5) * 10; // Getar kiri kanan
-                    offsetY = (Math.random() - 0.5) * 10;
-                } else if(this.config.anim === 'slide') {
-                    // Reset posisi setiap 100 frame
-                    let slideT = (t % 100) / 100; 
-                    offsetY = 50 - (slideT * 50); // Geser dari bawah ke atas
-                }
-
-                ctx.save();
-                ctx.translate(w/2 + offsetX, h/2 + offsetY);
-                ctx.scale(scale, scale);
-
-                // Draw Text 1
-                ctx.font = `bold ${w*0.1}px Arial`;
-                ctx.fillStyle = "#fff";
-                ctx.shadowColor = "cyan";
-                ctx.shadowBlur = 20;
-                ctx.fillText(this.config.text, 0, -50);
-
-                // Draw Text 2 (Sub)
-                ctx.font = `${w*0.04}px Arial`;
-                ctx.fillStyle = "#aaa";
-                ctx.shadowBlur = 0;
-                ctx.fillText(this.config.sub, 0, 80);
-
-                ctx.restore();
-
-                // 3. OVERLAY EFFECTS
-                if(this.config.scanline) this.drawScanlines(ctx, w, h);
-                if(this.config.vignette) this.drawVignette(ctx, w, h);
-
-                this.frame++;
-            },
-
-            // Sub-Fitur: Grid
-            drawGrid: function(ctx, w, h, t) {
-                ctx.strokeStyle = "rgba(0, 255, 255, 0.2)";
-                ctx.lineWidth = 1;
-                const speed = (t * 2) % 50;
-                // Vertical lines moving
-                for(let x = 0; x < w; x+=50) {
-                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-                }
-                // Horizontal lines (Horizon effect)
-                for(let y = 0; y < h; y+=50) {
-                    let yPos = y + speed; 
-                    if(yPos > h) yPos -= h;
-                    ctx.beginPath(); ctx.moveTo(0, yPos); ctx.lineTo(w, yPos); ctx.stroke();
-                }
-            },
-
-            // Sub-Fitur: Particles
-            drawParticles: function(ctx, w, h, t) {
-                ctx.fillStyle = "rgba(255,255,255,0.5)";
-                // Simulasi partikel sederhana (Deterministic random based on i)
-                for(let i=0; i<50; i++) {
-                    let x = (i * 153 + t) % w;
-                    let y = (i * 87 + t * 0.5) % h;
-                    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
-                }
-            },
-
-            // Sub-Fitur: Scanlines
-            drawScanlines: function(ctx, w, h) {
-                ctx.fillStyle = "rgba(0,0,0,0.3)";
-                for(let y=0; y<h; y+=4) {
-                    ctx.fillRect(0, y, w, 2);
-                }
-            },
-
-            // Sub-Fitur: Vignette
-            drawVignette: function(ctx, w, h) {
-                const grad = ctx.createRadialGradient(w/2, h/2, h/3, w/2, h/2, h);
-                grad.addColorStop(0, "transparent");
-                grad.addColorStop(1, "rgba(0,0,0,0.8)");
-                ctx.fillStyle = grad;
-                ctx.fillRect(0,0,w,h);
-            }
-        };
-
-        // --- MODULE: APPLICATION CONTROLLER ---
-        const app = {
-            timer: null,
-            isRecording: false,
-
-            init: function() {
-                Logger.info("Loading Graphics Engine...");
-                this.updateFromUI();
+            // 3. Split Text Logic (Memecah huruf)
+            textDisplay.innerHTML = ''; // Kosongkan dulu
+            const chars = rawText.split('');
+            
+            chars.forEach((char, index) => {
+                const span = document.createElement('span');
+                span.textContent = char === ' ' ? '\u00A0' : char; // Handle spasi
+                span.className = 'char';
                 
-                // Event Listeners (Agar UI hidup)
-                document.querySelectorAll('input, select').forEach(el => {
-                    el.addEventListener('input', () => this.updateFromUI());
-                });
-
-                // Mulai Loop Animasi
-                this.loop();
-                Logger.info("Ready. Waiting for user command.");
-            },
-
-            updateFromUI: function() {
-                // Ambil data dari Sidebar
-                Graphics.config.text = document.getElementById('inpText').value;
-                Graphics.config.sub = document.getElementById('inpSub').value;
-                Graphics.config.anim = document.getElementById('selAnim').value;
-                Graphics.config.bg = document.getElementById('selBg').value;
-                Graphics.config.scanline = document.getElementById('chkScanline').checked;
-                Graphics.config.vignette = document.getElementById('chkVignette').checked;
-
-                // Cek Resolusi
-                const res = document.getElementById('selRes').value.split(',');
-                if(Graphics.width != res[0]) {
-                    Graphics.resize(parseInt(res[0]), parseInt(res[1]));
+                // Logika Stagger (Delay bertahap)
+                // Jika animasi 'float', kita acak delay-nya supaya natural
+                if (selectedAnim === 'anim-float') {
+                    span.style.animationDelay = `${index * 0.2}s`;
+                } 
+                // Jika animasi 'fade', kita urutkan
+                else if (selectedAnim === 'anim-fade') {
+                    span.style.animationDelay = `${index * 0.1}s`;
                 }
-            },
-
-            loop: function() {
-                Graphics.render();
-                requestAnimationFrame(() => this.loop());
-            },
-
-            // Fitur: Export Video Logic
-            startExport: function() {
-                if(this.isRecording) return;
-                this.isRecording = true;
                 
-                const fps = parseInt(document.getElementById('selFps').value);
-                Logger.info(`Starting Capture at ${fps} FPS...`);
+                textDisplay.appendChild(span);
+            });
+        }
+
+        // --- 3. EVENT LISTENERS (MENDENGARKAN INPUT USER) ---
+
+        // Saat mengetik teks
+        textInput.addEventListener('input', () => {
+            updateEngine();
+            // Kita tidak log setiap ketikan agar tidak spam, log hanya saat selesai (blur) atau change
+        });
+
+        // Saat mengubah Style
+        styleSelect.addEventListener('change', () => {
+            updateEngine();
+            systemLog(`> Style updated to: ${styleSelect.options[styleSelect.selectedIndex].text}`);
+        });
+
+        // Saat mengubah Animasi
+        animSelect.addEventListener('change', () => {
+            updateEngine();
+            // Reset animasi dengan trik reflow
+            textDisplay.style.display = 'none';
+            void textDisplay.offsetWidth; 
+            textDisplay.style.display = 'block';
+            
+            systemLog(`> Animation Engine loaded: ${animSelect.value}`);
+        });
+
+        // Saat mengubah Overlay
+        overlaySelect.addEventListener('change', () => {
+            updateEngine();
+            systemLog(`> Overlay filter applied: ${overlaySelect.value || "None"}`);
+        });
+
+        // --- 4. SIMULASI GENERATE VIDEO ---
+        generateBtn.addEventListener('click', () => {
+            systemLog("> STARTING RENDER SEQUENCE...");
+            generateBtn.disabled = true;
+            generateBtn.innerText = "PROCESSING...";
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 20;
+                systemLog(`> Rendering frames... ${progress}%`);
                 
-                // Setup MediaRecorder
-                const stream = Graphics.canvas.captureStream(fps);
-                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                const chunks = [];
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    systemLog("> RENDER COMPLETE. File exported.");
+                    systemLog("> Output: C:/Users/Downloads/Video_Final.mp4");
+                    alert("Video berhasil digenerate! (Simulasi)");
+                    generateBtn.disabled = false;
+                    generateBtn.innerText = "GENERATE RENDER";
+                }
+            }, 500); // Update setiap 0.5 detik
+        });
 
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `render_${Date.now()}.webm`;
-                    a.click();
-                    Logger.info("Download started.");
-                    this.isRecording = false;
-                    document.querySelector('button.primary').innerText = "GENERATE VIDEO";
-                    document.querySelector('button.primary').disabled = false;
-                };
-
-                // Rekam selama 3 detik
-                recorder.start();
-                document.querySelector('button.primary').innerText = "RECORDING (3s)...";
-                document.querySelector('button.primary').disabled = true;
-
-                setTimeout(() => {
-                    Logger.info("Finishing encoding...");
-                    recorder.stop();
-                }, 3000);
-            }
-        };
-
-        // Jalankan Aplikasi
-        app.init();
+        // Jalankan sekali saat load
+        updateEngine();
 
     </script>
 </body>
