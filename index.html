@@ -2,370 +2,383 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBG Motion Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
+    <title>MBG PRO - Motion Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Orbitron:wght@900&display=swap" rel="stylesheet">
     <style>
+        /* --- 1. CSS VISUAL (SAMA SEPERTI YANG ANDA SUKA) --- */
         :root {
-            --bg-color: #020b14;
-            --panel-bg: #05101a;
-            --primary-cyan: #00f3ff;
-            --dim-cyan: rgba(0, 243, 255, 0.1);
-            --text-green: #0aff0a;
-            --text-white: #e0e0e0;
-            --border-color: #1a3c40;
-            --font-main: 'Share Tech Mono', monospace;
-        }
-
-        * {
-            box-sizing: border-box;
-            user-select: none; /* Supaya terasa seperti aplikasi native */
+            --bg-dark: #020608;
+            --cyan: #00f3ff;
+            --green: #39ff14;
+            --purple: #bc13fe;
+            --text-dim: #4a6a7c;
+            --border: #142832;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--primary-cyan);
-            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: #bce7ff;
+            font-family: 'JetBrains Mono', monospace;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            display: flex;
-            font-size: 14px;
         }
 
-        /* --- SIDEBAR KIRI --- */
-        aside {
-            width: 320px;
-            background: var(--bg-color);
-            border-right: 1px solid var(--border-color);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            overflow-y: auto;
-        }
+        /* UTILS */
+        .hidden { display: none; }
+        button { cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
 
-        .brand h1 {
-            font-size: 24px;
-            margin: 0;
-            letter-spacing: 2px;
-            color: var(--primary-cyan);
-            text-shadow: 0 0 10px var(--dim-cyan);
-        }
-
-        .brand span {
-            font-size: 10px;
-            color: #557;
-            letter-spacing: 3px;
-            display: block;
-            margin-top: 5px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 11px;
-            color: #587;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Styling Input ala Sci-Fi */
-        input, select {
-            background: rgba(0, 20, 30, 0.8);
-            border: 1px solid var(--border-color);
-            color: var(--primary-cyan);
-            padding: 12px;
-            font-family: var(--font-main);
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-            transition: 0.3s;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary-cyan);
-            box-shadow: 0 0 10px var(--dim-cyan);
-        }
-
-        /* --- MAIN CONTENT (KANAN) --- */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-        }
-
-        /* TOP BAR */
-        .top-bar {
+        /* HEADER */
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            font-size: 11px;
-            color: #587;
+            background: rgba(5, 10, 14, 0.95);
+            z-index: 10;
         }
+        .brand { color: var(--cyan); font-weight: 800; border-left: 4px solid var(--cyan); padding-left: 10px; }
 
-        .top-settings {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
+        /* MAIN LAYOUT */
+        .main-container { display: flex; flex: 1; height: 100%; }
 
-        .setting-item {
+        /* SIDEBAR */
+        .sidebar {
+            width: 300px;
+            background: #050a0e;
+            border-right: 1px solid var(--border);
+            padding: 20px;
             display: flex;
             flex-direction: column;
+            gap: 20px;
+            z-index: 5;
         }
-        
-        .val { color: var(--primary-cyan); margin-top: 3px; font-weight: bold;}
+        .control-group label { display: block; color: var(--text-dim); font-size: 10px; margin-bottom: 5px; letter-spacing: 1px; }
+        .cyber-input, .cyber-select {
+            width: 100%; background: #000; border: 1px solid var(--border);
+            color: var(--cyan); padding: 10px; font-family: inherit; outline: none;
+        }
+        .cyber-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,243,255,0.2); }
 
-        /* PREVIEW AREA */
-        .preview-container {
+        /* WORKSPACE */
+        .workspace {
             flex: 1;
-            background: black;
-            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: radial-gradient(circle at center, #0a151a 0%, #000 100%);
             position: relative;
+        }
+
+        /* PREVIEW AREA (CANVAS) */
+        .preview-wrapper {
+            flex: 1;
+            position: relative;
+            border: 1px solid var(--border);
+            background: #000;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
+            /* Cyberpunk corners */
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
         }
 
-        /* Garis Grid Latar Belakang */
-        .grid-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
-            z-index: 0;
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
 
-        /* Teks Utama di Preview */
-        #previewText {
-            font-size: 80px;
-            font-weight: bold;
-            text-align: center;
-            color: white;
-            z-index: 10;
-            text-transform: uppercase;
-            text-shadow: 4px 4px 0px rgba(255, 0, 80, 0.8), -2px -2px 0px rgba(0, 243, 255, 0.8);
-            line-height: 1;
+        /* OVERLAYS */
+        .rec-indicator {
+            position: absolute; top: 20px; right: 20px;
+            color: #ff0055; font-weight: bold; font-size: 12px;
+            display: flex; align-items: center; gap: 5px;
+            opacity: 0; transition: opacity 0.3s;
         }
+        .rec-dot { width: 10px; height: 10px; background: #ff0055; border-radius: 50%; }
+        .blinking { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        /* Overlay UI di Video */
-        .video-ui {
-            position: absolute;
-            top: 15px; left: 20px;
-            font-size: 10px;
-            color: var(--primary-cyan);
-            z-index: 5;
-        }
-
-        .video-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 20px;
-            background: linear-gradient(transparent, black);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            z-index: 20;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 3px;
-            background: #333;
-        }
-        .progress-fill {
-            width: 60%;
-            height: 100%;
-            background: var(--text-white);
-        }
-
-        /* --- BOTTOM PANEL --- */
+        /* BOTTOM PANEL */
         .bottom-panel {
-            height: 180px;
-            margin-top: 20px;
+            height: 160px;
             display: flex;
             gap: 20px;
+            margin-top: 20px;
         }
-
-        .generate-btn {
+        
+        .btn-generate {
             width: 300px;
-            background: var(--primary-cyan);
-            color: black;
-            font-weight: bold;
+            background: var(--cyan);
+            color: #000;
+            font-weight: 900;
             font-size: 18px;
             border: none;
-            /* Efek sudut terpotong (Chamfered) */
-            clip-path: polygon(20px 0, 100% 0, 100% 100%, 0 100%, 0 20px);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
         }
-        .generate-btn:hover {
-            background: white;
-        }
+        .btn-generate:hover { box-shadow: 0 0 30px var(--cyan); letter-spacing: 2px; }
+        .btn-generate:disabled { background: #333; color: #777; cursor: not-allowed; box-shadow: none; letter-spacing: normal;}
 
         .telemetry {
             flex: 1;
-            background: rgba(0, 20, 20, 0.5);
-            border: 1px dashed var(--border-color);
-            padding: 15px;
-            font-family: var(--font-main);
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-family: 'Courier New', monospace;
             font-size: 12px;
-            overflow: hidden;
-        }
-
-        .telemetry-header {
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            color: var(--green);
+            overflow-y: auto;
             display: flex;
-            justify-content: space-between;
-            color: var(--primary-cyan);
+            flex-direction: column-reverse; /* Log baru di bawah */
         }
-
-        .logs div {
-            margin-bottom: 4px;
-        }
-        .log-time { color: var(--primary-cyan); margin-right: 10px; }
-        .log-msg { color: var(--text-green); }
+        .log-line { margin-bottom: 2px; opacity: 0.8; }
+        .log-line::before { content: "> "; color: #555; }
 
     </style>
 </head>
 <body>
 
-    <aside>
-        <div class="brand">
-            <h1>MBG X 19 JUTA</h1>
-            <span>VISUAL TEMPLATE</span>
-        </div>
+    <header>
+        <div class="brand">MBG STUDIO <span style="font-size:10px; color:white; font-weight:normal;">// PRO VER</span></div>
+        <div style="font-size:10px; color:#555;">SYSTEM_READY</div>
+    </header>
 
-        <div class="control-group">
-            <label>Select Style</label>
-            <select>
-                <option>Typography Max (Bold)</option>
-                <option>Minimalist Thin</option>
-                <option>Kinetic Rush</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label>Headline Control</label>
-            <input type="text" id="headlineInput" value="HIDUP JOKOWI" oninput="updatePreview()">
-        </div>
-
-        <div class="control-group">
-            <label>Visual Engine</label>
-            <select style="border: 1px solid var(--primary-cyan); box-shadow: 0 0 8px var(--dim-cyan);">
-                <option>Floating Particles (Dream)</option>
-                <option>Cyber Grid</option>
-                <option>Liquid Chrome</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label>Overlay Layer</label>
-            <select>
-                <option>Scanlines (CRT)</option>
-                <option>VHS Noise</option>
-                <option>None</option>
-            </select>
-        </div>
-
-        <div class="control-group">
-            <label>Destination</label>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" value="C:\Users\Kaz\Downloads\Render" disabled>
-                <button style="background:transparent; border:1px solid #333; color:cyan;">📂</button>
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="control-group">
+                <label>⊞ COLOR THEME</label>
+                <select id="inputTheme" class="cyber-select" onchange="updateSettings()">
+                    <option value="cyan">Cyber Cyan (Default)</option>
+                    <option value="green">Hacker Green</option>
+                    <option value="purple">Neon Purple</option>
+                </select>
             </div>
-        </div>
-    </aside>
 
-    <main>
-        <header class="top-bar">
-            <div>PROJECT_X3 // REALTIME_PREVIEW // READY</div>
+            <div class="control-group">
+                <label>T LINE 1 TEXT</label>
+                <input type="text" id="inputText1" class="cyber-input" value="HIDUP" oninput="updateSettings()">
+            </div>
+
+            <div class="control-group">
+                <label>T LINE 2 TEXT</label>
+                <input type="text" id="inputText2" class="cyber-input" value="JOKOWI" oninput="updateSettings()">
+            </div>
+
+            <div class="control-group">
+                <label>⚡ PARTICLES</label>
+                <select id="inputParticles" class="cyber-select" onchange="updateSettings()">
+                    <option value="on">On (Active)</option>
+                    <option value="off">Off (Clean)</option>
+                </select>
+            </div>
             
-            <div class="top-settings">
-                <div class="setting-item">
-                    <label>Pattern</label> <div class="val">Forest</div>
-                </div>
-                <div class="setting-item">
-                    <label>FPS</label> <div class="val">60</div>
-                </div>
-                <div class="setting-item">
-                    <label>Res</label> <div class="val">1080p</div>
-                </div>
-                <div class="setting-item">
-                    <label>Engine</label> <div class="val">GPU (NVENC)</div>
-                </div>
+            <div style="margin-top:auto; font-size:10px; color:#555;">
+                RENDER ENGINE: CANVAS 2D<br>FPS TARGET: 60
             </div>
-        </header>
+        </aside>
 
-        <div class="preview-container">
-            <div class="grid-bg"></div>
-            <div class="video-ui">LIVE_FEED</div>
-            
-            <div id="previewText">
-                HIDUP<br>JOKOWI
+        <main class="workspace">
+            <div class="preview-wrapper">
+                <div id="recStatus" class="rec-indicator blinking"><div class="rec-dot"></div> RECORDING...</div>
+                <canvas id="mainCanvas"></canvas>
             </div>
 
-            <div class="video-controls">
-                <span style="color:white; cursor:pointer;">❚❚</span>
-                <span style="color:#777;">0:03 / 0:05</span>
-                <div class="progress-bar"><div class="progress-fill"></div></div>
-                <span style="color:white;">⛶</span>
-            </div>
-        </div>
-
-        <footer class="bottom-panel">
-            <button class="generate-btn">
-                <span>↓</span> GENERATE VIDEO
-            </button>
-
-            <div class="telemetry">
-                <div class="telemetry-header">
-                    <span>SYSTEM_TELEMETRY</span>
-                    <span>0%</span>
+            <div class="bottom-panel">
+                <button id="btnRecord" class="btn-generate" onclick="startExport()">
+                    ↓ GENERATE VIDEO
+                </button>
+                <div class="telemetry" id="logConsole">
+                    <div class="log-line">System initialized. Waiting for input...</div>
                 </div>
-                <div class="logs">
-                    <div><span class="log-msg">> Application ready.</span></div>
-                    <div><span class="log-msg">> GPU detected: NVIDIA RTX Series.</span></div>
-                    <div><span class="log-msg">> Quality Engine: Dynamic Mode Active.</span></div>
-                    <div><span class="log-time">[10:20:25 AM]</span><span class="log-msg">Applied Color Pattern: Sunset</span></div>
-                    <div><span class="log-time">[10:30:46 AM]</span><span class="log-msg">Applied Color Pattern: Cyberpunk</span></div>
-                    <div><span class="log-time">[10:30:49 AM]</span><span class="log-msg">Applied Color Pattern: Forest</span></div>
-                </div>
-                <div style="margin-top:10px; font-size:10px; color:#555;">Est. Processing: ~10s</div>
             </div>
-        </footer>
-    </main>
+        </main>
+    </div>
 
     <script>
-        function updatePreview() {
-            const input = document.getElementById('headlineInput').value;
-            // Ganti spasi dengan <br> agar teks turun ke bawah jika ada spasi (seperti di contoh gambar)
-            const formattedText = input.replace(' ', '<br>'); 
-            document.getElementById('previewText').innerHTML = formattedText;
+        // --- 1. SETUP CANVAS ---
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set Resolusi Internal (Full HD)
+        canvas.width = 1920;
+        canvas.height = 1080;
+
+        // State / Variabel Global
+        let state = {
+            text1: "HIDUP",
+            text2: "JOKOWI",
+            theme: "cyan", // cyan, green, purple
+            particlesEnabled: true,
+            primaryColor: "#00f3ff"
+        };
+
+        // Objek Partikel
+        let particles = [];
+        let animationId;
+        let isRecording = false;
+
+        // --- 2. FUNGSI LOGGING (TELEMETRY) ---
+        function log(msg) {
+            const consoleDiv = document.getElementById('logConsole');
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            div.innerText = `[${time}] ${msg}`;
+            consoleDiv.prepend(div); // Tambah ke atas
         }
+
+        // --- 3. LOGIKA UPDATE DARI INPUT ---
+        function updateSettings() {
+            state.text1 = document.getElementById('inputText1').value.toUpperCase();
+            state.text2 = document.getElementById('inputText2').value.toUpperCase();
+            state.theme = document.getElementById('inputTheme').value;
+            state.particlesEnabled = document.getElementById('inputParticles').value === 'on';
+
+            // Set Warna Berdasarkan Tema
+            if(state.theme === 'cyan') state.primaryColor = "#00f3ff";
+            if(state.theme === 'green') state.primaryColor = "#39ff14";
+            if(state.theme === 'purple') state.primaryColor = "#bc13fe";
+        }
+
+        // --- 4. ENGINE PARTIKEL ---
+        function initParticles() {
+            particles = [];
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 3,
+                    speed: Math.random() * 2 + 0.5,
+                    alpha: Math.random()
+                });
+            }
+        }
+
+        // --- 5. FUNGSI GAMBAR (RENDER LOOP) ---
+        function draw(time) {
+            // A. Background Gelap
+            ctx.fillStyle = "#050a0e";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid Background (Efek Tech)
+            ctx.strokeStyle = "rgba(255,255,255,0.03)";
+            ctx.lineWidth = 2;
+            for(let i=0; i<canvas.width; i+=100) {
+                ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+
+            // B. Gambar Partikel
+            if (state.particlesEnabled) {
+                ctx.fillStyle = state.primaryColor;
+                particles.forEach(p => {
+                    p.y -= p.speed; // Gerak ke atas
+                    if(p.y < 0) p.y = canvas.height; // Reset
+                    
+                    ctx.globalAlpha = p.alpha * 0.5;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1.0;
+            }
+
+            // C. Setup Teks
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // Efek Glitch (Getar sedikit secara random)
+            let offsetX = Math.random() > 0.95 ? (Math.random()*4 - 2) : 0;
+            
+            // Teks 1 (Besar)
+            ctx.textAlign = "center";
+            ctx.font = "900 180px 'Orbitron', sans-serif"; // Font Sci-Fi
+            
+            // Shadow / Glow
+            ctx.shadowColor = state.primaryColor;
+            ctx.shadowBlur = 30;
+            ctx.fillStyle = state.primaryColor;
+            ctx.fillText(state.text1, centerX + offsetX, centerY - 20);
+            
+            // Teks 2 (Putih)
+            ctx.shadowBlur = 0; // Reset shadow untuk teks bawah
+            ctx.font = "700 120px 'JetBrains Mono', monospace";
+            ctx.fillStyle = "white";
+            ctx.fillText(state.text2, centerX - offsetX, centerY + 120);
+
+            // Garis Aksen Bawah
+            ctx.fillStyle = state.primaryColor;
+            ctx.shadowBlur = 10;
+            ctx.fillRect(centerX - 100, centerY + 160, 200, 10);
+            ctx.shadowBlur = 0;
+
+            // Overlay Scanline (Garis TV)
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            for(let y=0; y<canvas.height; y+=4) {
+                ctx.fillRect(0, y, canvas.width, 2);
+            }
+
+            // Loop
+            animationId = requestAnimationFrame(draw);
+        }
+
+        // --- 6. FUNGSI EXPORT VIDEO (RECORDING) ---
+        function startExport() {
+            const btn = document.getElementById('btnRecord');
+            const indicator = document.getElementById('recStatus');
+
+            // UI Feedback
+            btn.disabled = true;
+            btn.innerText = "PROSESSING...";
+            indicator.style.opacity = 1;
+            log("Initializing render sequence...");
+
+            // Setup Recorder
+            const stream = canvas.captureStream(60);
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+            const chunks = [];
+
+            recorder.ondataavailable = e => chunks.push(e.data);
+            
+            recorder.onstop = () => {
+                // Selesai Rekam
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                
+                // Auto Download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `MBG_PROJECT_${Date.now()}.webm`;
+                a.click();
+                
+                // Reset UI
+                btn.disabled = false;
+                btn.innerText = "↓ GENERATE VIDEO";
+                indicator.style.opacity = 0;
+                log("Render complete. File downloaded.");
+                log("System ready.");
+            };
+
+            // Mulai Rekam
+            recorder.start();
+            log("Recording frame buffer...");
+
+            // Stop otomatis setelah 5 detik
+            setTimeout(() => {
+                log("Finalizing encoding...");
+                recorder.stop();
+            }, 5000);
+        }
+
+        // --- JALANKAN PERTAMA KALI ---
+        initParticles();
+        draw();
+        log("Application loaded successfully.");
+
     </script>
 </body>
 </html>
