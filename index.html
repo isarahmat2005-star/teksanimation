@@ -1,167 +1,40 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Text Motion</title>
-    <style>
-        /* 1. TAMPILAN ANTARMUKA (UI) */
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #121212;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
+from manim import *
 
-        .controls {
-            background: #1e1e1e;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            display: flex;
-            gap: 10px;
-            margin-bottom: 50px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        input, select, button {
-            padding: 12px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-        }
-
-        input { width: 250px; }
-        button { 
-            background-color: #00d2ff; 
-            color: #000; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: transform 0.1s;
-        }
-        button:active { transform: scale(0.95); }
-
-        /* AREA DISPLAY TEXT */
-        #output-container {
-            width: 80%;
-            height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed #333;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #animated-text {
-            font-size: 3rem;
-            font-weight: 800;
-            text-align: center;
-        }
-
-        /* 2. DEFINISI ANIMASI (CSS KEYFRAMES) */
+class TextMotionApp(Scene):
+    def construct(self):
+        # 1. TERIMA INPUT DARI PENGGUNA (Bisa diganti variabel dinamis)
+        teks_baris_1 = "HIDUP"
+        teks_baris_2 = "JOKOWI"
         
-        /* A. Pop Up (Muncul membesar) */
-        .motion-pop {
-            animation: popAnim 0.8s cubic-bezier(0.17, 0.67, 0.43, 1.45) both;
-        }
-        @keyframes popAnim {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* B. Slide Up (Geser dari bawah) */
-        .motion-slide {
-            animation: slideAnim 0.8s ease-out both;
-        }
-        @keyframes slideAnim {
-            0% { transform: translateY(100px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
-        /* C. Glitch (Efek rusak/bergetar) */
-        .motion-glitch {
-            animation: glitchAnim 0.4s infinite;
-        }
-        @keyframes glitchAnim {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) }
-            60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) }
-            100% { transform: translate(0) }
-        }
-
-        /* D. Blur Focus (Dari buram ke jelas) */
-        .motion-blur {
-            animation: blurAnim 1.2s ease-in-out both;
-        }
-        @keyframes blurAnim {
-            0% { filter: blur(20px); opacity: 0; letter-spacing: 10px; }
-            100% { filter: blur(0); opacity: 1; letter-spacing: 0px; }
-        }
-
-        /* E. Neon Pulse (Berkedip) */
-        .motion-neon {
-            animation: neonAnim 1.5s infinite alternate;
-            color: #fff;
-            text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de;
-        }
-        @keyframes neonAnim {
-            from { text-shadow: 0 0 10px #ff00de, 0 0 20px #ff00de; opacity: 1; }
-            to { text-shadow: 0 0 2px #ff00de, 0 0 5px #ff00de; opacity: 0.5; }
-        }
-
-    </style>
-</head>
-<body>
-
-    <div class="controls">
-        <input type="text" id="userInput" placeholder="Tulis teks di sini..." value="Halo Dunia!">
+        # 2. SETUP GAYA (STYLE)
+        # Membuat teks dengan font tebal dan warna sesuai video contoh
+        t1 = Text(teks_baris_1, font="Arial", weight=BOLD, font_size=96, color=TEAL_C)
+        t2 = Text(teks_baris_2, font="Arial", weight=BOLD, font_size=96, color=WHITE)
         
-        <select id="motionSelect">
-            <option value="motion-pop">Pop Up</option>
-            <option value="motion-slide">Slide Up</option>
-            <option value="motion-blur">Cinematic Blur</option>
-            <option value="motion-glitch">Glitch Effect</option>
-            <option value="motion-neon">Neon Pulse</option>
-        </select>
+        # Garis bawah dekoratif (seperti di video)
+        garis = Line(start=LEFT, end=RIGHT, color=GREEN).width(4).next_to(t2, DOWN)
 
-        <button onclick="playMotion()">Mainkan Animasi</button>
-    </div>
-
-    <div id="output-container">
-        <h1 id="animated-text">Halo Dunia!</h1>
-    </div>
-
-    <script>
-        // 3. LOGIKA JAVASCRIPT
-        function playMotion() {
-            const input = document.getElementById('userInput').value;
-            const motionType = document.getElementById('motionSelect').value;
-            const textElement = document.getElementById('animated-text');
-
-            // 1. Update teks sesuai input user
-            if(input.trim() !== "") {
-                textElement.innerText = input;
-            }
-
-            // 2. Reset animasi (Trik agar animasi bisa diputar ulang)
-            textElement.className = ''; 
-            
-            // "Force Reflow" - Memaksa browser merender ulang agar tahu kelas dihapus
-            void textElement.offsetWidth; 
-
-            // 3. Tambahkan kelas animasi yang dipilih
-            textElement.classList.add(motionType);
-        }
-    </script>
-</body>
-</html>
+        # Mengatur posisi (Grouping)
+        grup_teks = VGroup(t1, t2).arrange(DOWN, buff=0.2)
+        
+        # 3. BACKGROUND (Opsional: Meniru efek gelap/partikel)
+        self.camera.background_color = "#0f1712" # Hijau tua sangat gelap
+        
+        # 4. DEFINISI MOTION (ANIMASI)
+        # Animasi 1: Fade In + Geser Sedikit (Slide)
+        self.play(
+            FadeIn(t1, shift=UP),
+            FadeIn(t2, shift=UP),
+            Create(garis),
+            run_time=1.5
+        )
+        
+        # Animasi 2: Sedikit "Zoom" (Scale) untuk efek dramatis
+        self.play(
+            grup_teks.animate.scale(1.1),
+            garis.animate.width(5),
+            run_time=3
+        )
+        
+        # Animasi 3: Fade Out
+        self.play(FadeOut(grup_teks), FadeOut(garis))
