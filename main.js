@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
-const { exiftool } = require('exiftool-vendor');
+const { exiftool } = require('exiftool-vendored');
 
 let mainWindow;
 
