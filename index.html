@@ -2,110 +2,314 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Microstock Metadata Injector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metadata Injector</title>
   <style>
     :root {
-      --bg-main: #121214;
-      --bg-card: #1a1a1e;
-      --accent: #00bcd4;
-      --text: #e1e1e6;
-      --border: #29292e;
+      --bg-main: #f1f5f9;
+      --bg-card: #ffffff;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --success: #16a34a;
+      --error: #dc2626;
     }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       background-color: var(--bg-main);
-      color: var(--text);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 20px;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    .container { max-width: 700px; margin: 0 auto; }
-    .form-group {
+
+    .container {
       background: var(--bg-card);
-      padding: 15px;
+      width: 100%;
+      max-width: 650px;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .header {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-browse {
+      background-color: #ffffff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 10px 18px;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      margin-bottom: 15px;
-      display: flex; align-items: center; justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .btn {
-      background: var(--border);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 10px 15px; border-radius: 6px; cursor: pointer;
+
+    .btn-browse:hover {
+      background-color: #eff6ff;
     }
-    .btn:hover { border-color: var(--accent); }
+
+    .path-display {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0;
+      padding: 14px;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .checkbox-container input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .checkbox-container label {
+      font-size: 14px;
+      color: var(--text-main);
+      cursor: pointer;
+      user-select: none;
+    }
+
     .btn-main {
-      background: var(--accent); color: #000; font-weight: bold;
-      width: 100%; padding: 15px; font-size: 16px; margin-top: 10px;
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
-    .path-display { font-size: 13px; color: #8d8d99; max-width: 70%; overflow: hidden; text-overflow: ellipsis; }
-    .checkbox-container { margin: 15px 5px; display: flex; align-items: center; gap: 10px; }
-    
-    /* Panel Log Terminal */
+
+    .btn-main:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .log-section {
+      margin-top: 28px;
+    }
+
+    .log-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
     .log-panel {
-      background: #09090a; border: 1px solid var(--border);
-      border-radius: 6px; height: 180px; padding: 10px;
-      font-family: 'Courier New', Courier, monospace; font-size: 12px;
-      overflow-y: auto; color: #a8a8b3; margin-top: 15px;
+      background: #0f172a;
+      border-radius: 8px;
+      height: 180px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 12px;
+      overflow-y: auto;
+      color: #94a3b8;
+      line-height: 1.6;
     }
-    .log-entry.success { color: #04d361; }
-    .log-entry.error { color: #f75a68; }
+
+    .log-entry {
+      margin-bottom: 4px;
+    }
+
+    .log-entry.success { color: #4ade80; }
+    .log-entry.error { color: #f87171; }
+    .log-entry.info { color: #38bdf8; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Microstock Metadata Injector</h2>
+  <div class="header">
+    <h1>Microstock Injector</h1>
+    <p>Suntik Metadata Gambar & Vektor via Lokal Berbasis JSON</p>
+  </div>
   
-  <!-- Folder Asal -->
   <div class="form-group">
-    <button class="btn" id="btn-source">Pilih Folder Asal</button>
-    <div class="path-display" id="source-path">Belum ada folder terpilih...</div>
+    <label class="form-label">Folder Asal</label>
+    <div class="input-row">
+      <button class="btn-browse" id="btn-source">Pilih Folder</button>
+      <div class="path-display" id="source-path">Belum ada folder asal terpilih...</div>
+    </div>
   </div>
 
-  <!-- Folder Tujuan -->
   <div class="form-group">
-    <button class="btn" id="btn-target">Pilih Folder Tujuan</button>
-    <div class="path-display" id="target-path">Belum ada folder terpilih...</div>
+    <label class="form-label">Folder Tujuan</label>
+    <div class="input-row">
+      <button class="btn-browse" id="btn-target">Pilih Folder</button>
+      <div class="path-display" id="target-path">Belum ada folder tujuan terpilih...</div>
+    </div>
   </div>
 
-  <!-- File CSV -->
   <div class="form-group">
-    <button class="btn" id="btn-csv">Upload File CSV</button>
-    <div class="path-display" id="csv-path">Belum ada file CSV terpilih...</div>
+    <label class="form-label">File Metadata (JSON)</label>
+    <div class="input-row">
+      <button class="btn-browse" id="btn-json">Upload JSON</button>
+      <div class="path-display" id="json-path">Belum ada file JSON terpilih...</div>
+    </div>
   </div>
 
-  <!-- Checkbox Hapus Asal -->
   <div class="checkbox-container">
-    <input type="checkbox" id="chk-delete-source" style="transform: scale(1.2);">
+    <input type="checkbox" id="chk-delete-source">
     <label for="chk-delete-source">Hapus file di folder asal setelah sukses di-inject</label>
   </div>
 
-  <!-- Tombol Eksekusi -->
-  <button class="btn btn-main" id="btn-start">MULAI PROSES INJEKSI</button>
+  <button class="btn-main" id="btn-start">MULAI PROSES INJEKSI</button>
 
-  <!-- Log Window -->
-  <div class="log-panel" id="log-window">
-    <div class="log-entry">[System] Aplikasi siap digunakan.</div>
+  <div class="log-section">
+    <div class="log-title">Aktivitas Proses</div>
+    <div class="log-panel" id="log-window">
+      <div class="log-entry">[System] Aplikasi siap digunakan.</div>
+    </div>
   </div>
 </div>
 
 <script>
-  // Logika UI handling (fungsi append log tanpa menimbun memori)
+  // Cek apakah berjalan di dalam Electron atau Browser biasa (Vercel)
+  const isElectron = typeof window !== 'undefined' && window.process && window.process.type;
+  const ipcRenderer = isElectron ? window.require('electron').ipcRenderer : null;
+
+  const btnSource = document.getElementById('btn-source');
+  const btnTarget = document.getElementById('btn-target');
+  const btnJson = document.getElementById('btn-json');
+  const btnStart = document.getElementById('btn-start');
+
+  const sourcePath = document.getElementById('source-path');
+  const targetPath = document.getElementById('target-path');
+  const jsonPath = document.getElementById('json-path');
+  const chkDeleteSource = document.getElementById('chk-delete-source');
   const logWindow = document.getElementById('log-window');
-  
+
+  let paths = { sourceDir: null, targetDir: null, jsonPath: null };
+
   function addLog(text, type = 'info') {
     const entry = document.createElement('div');
     entry.className = `log-entry ${type}`;
     entry.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
     logWindow.appendChild(entry);
     
-    // Batasi log di UI hanya 150 baris terakhir agar DOM tidak berat/lag
-    if (logWindow.children.length > 150) {
+    if (logWindow.children.length > 100) {
       logWindow.removeChild(logWindow.firstChild);
     }
-    
-    // Auto scroll ke bawah
     logWindow.scrollTop = logWindow.scrollHeight;
+  }
+
+  if (ipcRenderer) {
+    // Jalur Logika Electron (Aplikasi Desktop Asli)
+    btnSource.addEventListener('click', async () => {
+      const path = await ipcRenderer.invoke('browse-folder');
+      if (path) { paths.sourceDir = path; sourcePath.innerText = path; }
+    });
+
+    btnTarget.addEventListener('click', async () => {
+      const path = await ipcRenderer.invoke('browse-folder');
+      if (path) { paths.targetDir = path; targetPath.innerText = path; }
+    });
+
+    btnJson.addEventListener('click', async () => {
+      const path = await ipcRenderer.invoke('browse-json');
+      if (path) { paths.jsonPath = path; jsonPath.innerText = path; }
+    });
+
+    btnStart.addEventListener('click', () => {
+      ipcRenderer.send('execute-injection', {
+        ...paths,
+        deleteOriginal: chkDeleteSource.checked
+      });
+    });
+
+    ipcRenderer.on('log-to-ui', (event, text, type) => {
+      addLog(text, type);
+    });
+  } else {
+    // Jalur Logika Web Preview (Vercel Simulation Mode)
+    console.log("Menjalankan mode simulasi web (Vercel Preview).");
+    
+    const setupMockBrowse = (btn, display, label) => {
+      btn.addEventListener('click', () => {
+        const dummy = label === 'JSON' ? 'C:\\Downloads\\metadata.json' : `C:\\Microstock\\${label}`;
+        if(label === 'JSON') paths.jsonPath = dummy;
+        else if(btn === btnSource) paths.sourceDir = dummy;
+        else paths.targetDir = dummy;
+        display.innerText = dummy;
+        addLog(`Simulasi: Memilih ${label}`, 'info');
+      });
+    };
+
+    setupMockBrowse(btnSource, sourcePath, 'Folder_Asal');
+    setupMockBrowse(btnTarget, targetPath, 'Folder_Tujuan');
+    setupMockBrowse(btnJson, jsonPath, 'JSON');
+
+    btnStart.addEventListener('click', () => {
+      addLog('Memulai simulasi sistem...', 'info');
+      addLog('Peringatan: Untuk memproses file lokal, aplikasi harus dijalankan dalam mode desktop (.exe).', 'error');
+    });
   }
 </script>
 </body>
