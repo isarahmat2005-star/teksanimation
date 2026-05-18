@@ -1,0 +1,52 @@
+{
+  "name": "microstock-metadata-injector",
+  "version": "1.0.0",
+  "description": "Aplikasi lokal untuk inject metadata gambar dan vektor untuk Microstock",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "keywords": [
+    "microstock",
+    "metadata",
+    "injector",
+    "exiftool",
+    "electron"
+  ],
+  "author": "IsaProject",
+  "license": "MIT",
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "exiftool-vendor": "^26.0.0"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0"
+  },
+  "build": {
+    "appId": "com.isaproject.metadata-injector",
+    "productName": "MicrostockInjector",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true
+    }
+  }
+}
