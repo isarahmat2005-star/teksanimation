@@ -1,381 +1,112 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Motion Engine - Big Preview</title>
-    <style>
-        /* RESET & BASE */
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #0b0b0b; 
-            color: #ccc; 
-            margin: 0; 
-            height: 100vh; 
-            display: flex; 
-            overflow: hidden; 
-        }
-
-        /* --- LAYOUT KIRI: CONTROLS (300px) --- */
-        .sidebar { 
-            width: 300px; 
-            background: #141414; 
-            border-right: 1px solid #333; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 15px; 
-            gap: 15px; 
-            overflow-y: auto; 
-            z-index: 10;
-        }
-
-        .section-title {
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-        }
-
-        .control-group { margin-bottom: 10px; }
-        label { display: block; font-size: 12px; margin-bottom: 4px; color: #aaa; }
-        
-        input, select {
-            width: 100%; 
-            padding: 10px; 
-            background: #222; 
-            border: 1px solid #444; 
-            color: white; 
-            border-radius: 4px; 
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        input:focus, select:focus { border-color: #007bff; outline: none; }
-
-        /* BUTTON GENERATE */
-        .btn-action {
-            margin-top: auto;
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-action:hover { background: #0056b3; }
-        .btn-action:disabled { background: #333; cursor: not-allowed; }
-
-        /* --- LAYOUT KANAN: PREVIEW AREA (FLEX GROW) --- */
-        .main-area { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            background: #000; 
-            position: relative; 
-        }
-
-        /* Container Canvas agar responsif tapi tetap pertahankan aspect ratio */
-        .canvas-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-image: 
-                linear-gradient(#1a1a1a 1px, transparent 1px), 
-                linear-gradient(90deg, #1a1a1a 1px, transparent 1px);
-            background-size: 40px 40px;
-            overflow: hidden;
-        }
-
-        /* Canvas CSS: Ini kunci agar tidak kekecilan */
-        canvas {
-            max-width: 100%;
-            max-height: 100%;
-            aspect-ratio: 16/9;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            background: #000;
-        }
-
-        /* Status Bar Bawah */
-        .status-bar {
-            height: 30px;
-            background: #111;
-            border-top: 1px solid #333;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            font-size: 11px;
-            font-family: monospace;
-            color: #0f0;
-            justify-content: space-between;
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <title>Microstock Metadata Injector</title>
+  <style>
+    :root {
+      --bg-main: #121214;
+      --bg-card: #1a1a1e;
+      --accent: #00bcd4;
+      --text: #e1e1e6;
+      --border: #29292e;
+    }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 20px;
+    }
+    .container { max-width: 700px; margin: 0 auto; }
+    .form-group {
+      background: var(--bg-card);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 15px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .btn {
+      background: var(--border);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 15px; border-radius: 6px; cursor: pointer;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn-main {
+      background: var(--accent); color: #000; font-weight: bold;
+      width: 100%; padding: 15px; font-size: 16px; margin-top: 10px;
+    }
+    .path-display { font-size: 13px; color: #8d8d99; max-width: 70%; overflow: hidden; text-overflow: ellipsis; }
+    .checkbox-container { margin: 15px 5px; display: flex; align-items: center; gap: 10px; }
+    
+    /* Panel Log Terminal */
+    .log-panel {
+      background: #09090a; border: 1px solid var(--border);
+      border-radius: 6px; height: 180px; padding: 10px;
+      font-family: 'Courier New', Courier, monospace; font-size: 12px;
+      overflow-y: auto; color: #a8a8b3; margin-top: 15px;
+    }
+    .log-entry.success { color: #04d361; }
+    .log-entry.error { color: #f75a68; }
+  </style>
 </head>
 <body>
 
-    <div class="sidebar">
-        <h3 style="margin:0 0 10px 0; color:white;">MOTION STUDIO</h3>
+<div class="container">
+  <h2>Microstock Metadata Injector</h2>
+  
+  <!-- Folder Asal -->
+  <div class="form-group">
+    <button class="btn" id="btn-source">Pilih Folder Asal</button>
+    <div class="path-display" id="source-path">Belum ada folder terpilih...</div>
+  </div>
 
-        <div class="control-group">
-            <div class="section-title">CONTENT</div>
-            <label>Headline Utama</label>
-            <input type="text" id="inpText1" value="MOTION">
-            <label style="margin-top:8px">Sub-Headline</label>
-            <input type="text" id="inpText2" value="GRAPHICS">
-        </div>
+  <!-- Folder Tujuan -->
+  <div class="form-group">
+    <button class="btn" id="btn-target">Pilih Folder Tujuan</button>
+    <div class="path-display" id="target-path">Belum ada folder terpilih...</div>
+  </div>
 
-        <div class="control-group">
-            <div class="section-title">STYLE</div>
-            <label>Animasi</label>
-            <select id="inpAnim">
-                <option value="scale">Pulse Scale</option>
-                <option value="slide">Slide Up</option>
-                <option value="wobble">Wobble (Getar)</option>
-            </select>
-            <label style="margin-top:8px">Warna Tema</label>
-            <input type="color" id="inpColor" value="#00ff88" style="height:40px; padding:2px;">
-        </div>
+  <!-- File CSV -->
+  <div class="form-group">
+    <button class="btn" id="btn-csv">Upload File CSV</button>
+    <div class="path-display" id="csv-path">Belum ada file CSV terpilih...</div>
+  </div>
 
-        <div class="control-group">
-            <div class="section-title">ENGINE</div>
-            <label>Efek Overlay</label>
-            <div style="display:flex; gap:10px;">
-                <label><input type="checkbox" id="chkScanline" checked> Scanline</label>
-                <label><input type="checkbox" id="chkParticles" checked> Partikel</label>
-            </div>
-            
-            <label style="margin-top:8px">Resolusi Output</label>
-            <select id="inpRes">
-                <option value="1280,720">HD (720p)</option>
-                <option value="1920,1080">FHD (1080p)</option>
-            </select>
-        </div>
+  <!-- Checkbox Hapus Asal -->
+  <div class="checkbox-container">
+    <input type="checkbox" id="chk-delete-source" style="transform: scale(1.2);">
+    <label for="chk-delete-source">Hapus file di folder asal setelah sukses di-inject</label>
+  </div>
 
-        <button class="btn-action" id="btnRender" onclick="app.exportVideo()">
-            RENDER VIDEO (.WEBM)
-        </button>
-    </div>
+  <!-- Tombol Eksekusi -->
+  <button class="btn btn-main" id="btn-start">MULAI PROSES INJEKSI</button>
 
-    <div class="main-area">
-        <div class="canvas-container">
-            <canvas id="previewCanvas"></canvas>
-        </div>
-        <div class="status-bar">
-            <span id="statusText">SYSTEM READY.</span>
-            <span id="resInfo">1280x720 @ 60FPS</span>
-        </div>
-    </div>
+  <!-- Log Window -->
+  <div class="log-panel" id="log-window">
+    <div class="log-entry">[System] Aplikasi siap digunakan.</div>
+  </div>
+</div>
 
-    <script>
-        const app = {
-            canvas: document.getElementById('previewCanvas'),
-            ctx: document.getElementById('previewCanvas').getContext('2d'),
-            
-            // Konfigurasi Internal
-            width: 1280,
-            height: 720,
-            frame: 0,
-            isRecording: false,
-
-            // Data State (Diupdate dari Input)
-            state: {
-                text1: "", text2: "", color: "", anim: "",
-                scanline: true, particles: true
-            },
-
-            init: function() {
-                // Event Listener agar setiap ketikan langsung update
-                document.querySelectorAll('input, select').forEach(el => {
-                    el.addEventListener('input', () => this.updateState());
-                });
-
-                this.updateState();
-                this.loop();
-                this.updateStatus("Engine Started. Live Preview Active.");
-            },
-
-            updateState: function() {
-                this.state.text1 = document.getElementById('inpText1').value;
-                this.state.text2 = document.getElementById('inpText2').value;
-                this.state.anim = document.getElementById('inpAnim').value;
-                this.state.color = document.getElementById('inpColor').value;
-                this.state.scanline = document.getElementById('chkScanline').checked;
-                this.state.particles = document.getElementById('chkParticles').checked;
-
-                // Cek Resolusi
-                const res = document.getElementById('inpRes').value.split(',');
-                const newW = parseInt(res[0]);
-                const newH = parseInt(res[1]);
-
-                if (this.width !== newW) {
-                    this.width = newW;
-                    this.height = newH;
-                    this.canvas.width = this.width;
-                    this.canvas.height = this.height;
-                    document.getElementById('resInfo').innerText = `${newW}x${newH} @ 60FPS`;
-                }
-            },
-
-            updateStatus: function(msg) {
-                document.getElementById('statusText').innerText = "> " + msg;
-            },
-
-            // --- CORE RENDER FUNCTION ---
-            draw: function() {
-                const ctx = this.ctx;
-                const w = this.width;
-                const h = this.height;
-                const t = this.frame;
-
-                // 1. Background Bersih
-                ctx.fillStyle = "#050505";
-                ctx.fillRect(0, 0, w, h);
-
-                // 2. Grid Background (Supaya kelihatan pro)
-                ctx.strokeStyle = "#1a1a1a";
-                ctx.lineWidth = 2;
-                const gridSize = w / 20;
-                for (let i = 0; i < w; i += gridSize) {
-                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke();
-                }
-
-                // 3. Setup Koordinat Tengah
-                const cx = w / 2;
-                const cy = h / 2;
-
-                // 4. Kalkulasi Animasi Text
-                let scale = 1;
-                let offsetX = 0;
-
-                if (this.state.anim === 'scale') {
-                    scale = 1 + Math.sin(t * 0.05) * 0.05; // Membesar mengecil halus
-                } else if (this.state.anim === 'wobble') {
-                    offsetX = Math.sin(t * 0.2) * 10; // Goyang kiri kanan
-                } else if (this.state.anim === 'slide') {
-                     // Tidak mengubah posisi di sini, tapi di Y nanti
-                }
-
-                // 5. GAMBAR TEXT (FIXED VISIBILITY)
-                ctx.save();
-                ctx.translate(cx + offsetX, cy);
-                ctx.scale(scale, scale);
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-
-                // Text 1 (Headline) - Ukuran RELATIF terhadap lebar canvas (15%)
-                const fontSize1 = w * 0.15; 
-                ctx.font = `900 ${fontSize1}px Arial Black, sans-serif`;
-                ctx.fillStyle = this.state.color;
-                
-                // Efek Slide Up khusus Text 1
-                let yOffset1 = -40;
-                if (this.state.anim === 'slide') {
-                    // Animasi naik dalam 60 frame lalu diam
-                    let animProg = Math.min(1, (t % 120) / 60); 
-                    // Easing function cubic
-                    let ease = 1 - Math.pow(1 - animProg, 3);
-                    yOffset1 = 100 - (ease * 140); 
-                }
-
-                // Shadow neon
-                ctx.shadowColor = this.state.color;
-                ctx.shadowBlur = 30;
-                ctx.fillText(this.state.text1.toUpperCase(), 0, yOffset1);
-                
-                // Text 2 (Sub) - Ukuran RELATIF (5%)
-                ctx.shadowBlur = 0; // Reset shadow
-                const fontSize2 = w * 0.05;
-                ctx.font = `bold ${fontSize2}px monospace`;
-                ctx.fillStyle = "white";
-                ctx.fillText(this.state.text2.toUpperCase(), 0, yOffset1 + fontSize1 * 0.8);
-
-                ctx.restore();
-
-                // 6. Efek Partikel
-                if (this.state.particles) {
-                    ctx.fillStyle = "rgba(255,255,255,0.4)";
-                    for (let i = 0; i < 30; i++) {
-                        // Rumus random deterministik agar partikel bergerak konsisten
-                        let px = (i * 150 + t * 2) % w;
-                        let py = (i * 90 + Math.sin(t*0.01)*100) % h;
-                        ctx.beginPath();
-                        ctx.arc(px, py, w*0.002, 0, Math.PI*2); // Ukuran partikel relatif
-                        ctx.fill();
-                    }
-                }
-
-                // 7. Overlay Scanline (Garis TV)
-                if (this.state.scanline) {
-                    ctx.fillStyle = "rgba(0,0,0,0.3)";
-                    for (let y = 0; y < h; y += 4) {
-                        ctx.fillRect(0, y, w, 2);
-                    }
-                }
-
-                this.frame++;
-            },
-
-            loop: function() {
-                this.draw();
-                if (!this.isRecording) {
-                    requestAnimationFrame(() => this.loop());
-                }
-            },
-
-            // --- EXPORT VIDEO ---
-            exportVideo: function() {
-                const btn = document.getElementById('btnRender');
-                this.isRecording = true;
-                btn.disabled = true;
-                btn.innerText = "RECORDING (3s)...";
-                this.updateStatus("Rendering Video Sequence...");
-
-                const stream = this.canvas.captureStream(60);
-                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-                const chunks = [];
-
-                recorder.ondataavailable = e => chunks.push(e.data);
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `MotionText_${Date.now()}.webm`;
-                    a.click();
-                    
-                    // Reset UI
-                    this.isRecording = false;
-                    btn.disabled = false;
-                    btn.innerText = "RENDER VIDEO (.WEBM)";
-                    this.updateStatus("Render Complete. File Downloaded.");
-                    this.loop(); // Lanjut preview
-                };
-
-                recorder.start();
-                
-                // Rekam selama 3 detik (180 frame approx)
-                // Kita manual loop draw agar hasil rekam mulus
-                let recFrame = 0;
-                const recInterval = setInterval(() => {
-                    this.draw();
-                    recFrame++;
-                    if(recFrame >= 180) { // 3 Detik @ 60fps
-                        clearInterval(recInterval);
-                        recorder.stop();
-                    }
-                }, 1000 / 60);
-            }
-        };
-
-        // Jalankan App
-        window.onload = () => app.init();
-    </script>
+<script>
+  // Logika UI handling (fungsi append log tanpa menimbun memori)
+  const logWindow = document.getElementById('log-window');
+  
+  function addLog(text, type = 'info') {
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
+    logWindow.appendChild(entry);
+    
+    // Batasi log di UI hanya 150 baris terakhir agar DOM tidak berat/lag
+    if (logWindow.children.length > 150) {
+      logWindow.removeChild(logWindow.firstChild);
+    }
+    
+    // Auto scroll ke bawah
+    logWindow.scrollTop = logWindow.scrollHeight;
+  }
+</script>
 </body>
 </html>
