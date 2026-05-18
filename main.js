@@ -60,11 +60,14 @@ ipcMain.on('execute-injection', async (event, data) => {
     event.reply('log-to-ui', `JSON selesai dimuat. Menemukan ${records.length} baris data.`, 'info');
 
     for (const record of records) {
-      // Toleransi penamaan key di JSON (case-insensitive)
-      const filename = record.filename || record.Filename || record.file || record.File;
-      const title = record.title || record.Title || record.name || record.Name;
-      const description = record.description || record.Description || record.desc || record.Desc || title;
-      const keywordsRaw = record.keywords || record.Keywords || record.tags || record.Tags || [];
+      // Menyesuaikan dengan struktur JSON (record.name untuk filename)
+      const filename = record.name || record.filename || record.Filename || record.file || record.File;
+      
+      // Mengambil data dari object "metadata"
+      const meta = record.metadata || {};
+      const title = meta.title_en || record.title || record.Title || record.name || record.Name;
+      const description = meta.description_en || record.description || record.Description || record.desc || record.Desc || title;
+      const keywordsRaw = meta.keywords_en || record.keywords || record.Keywords || record.tags || record.Tags || [];
 
       if (!filename) {
         event.reply('log-to-ui', '⚠️ Baris dilewati: Kolom nama file tidak ditemukan.', 'error');
@@ -82,8 +85,14 @@ ipcMain.on('execute-injection', async (event, data) => {
       // Copy file ke folder tujuan terlebih dahulu agar aman
       fs.copyFileSync(srcPath, destPath);
 
-      // Parsing keywords menjadi array bersih (mendukung format string dipisah koma atau format array bawaan JSON)
+      // Parsing keywords menjadi array bersih
       const tags = Array.isArray(keywordsRaw) ? keywordsRaw : keywordsRaw.split(',').map(t => t.trim()).filter(t => t.length > 0);
+
+      // Menyiapkan 3 kategori
+      const catAdobe = meta.category_adobe || '';
+      const catShutterstock = meta.category_shutterstock || '';
+      const catDreamstime = Array.isArray(meta.category_dreamstime) ? meta.category_dreamstime.join(', ') : (meta.category_dreamstime || '');
+      const combinedCategories = [catAdobe, catShutterstock, catDreamstime].filter(Boolean).join('; ');
 
       // Inject menggunakan ExifTool (Kompatibel penuh dengan JPG, PNG, EPS Vektor)
       await exiftool.write(destPath, {
@@ -92,7 +101,9 @@ ipcMain.on('execute-injection', async (event, data) => {
         Keywords: tags,
         'IPTC:ObjectName': title,
         'IPTC:Caption-Abstract': description,
-        'IPTC:Keywords': tags
+        'IPTC:Keywords': tags,
+        'XMP:Category': combinedCategories,
+        'XMP:Instructions': combinedCategories
       });
 
       event.reply('log-to-ui', `✅ Sukses di-inject: ${filename}`, 'success');
