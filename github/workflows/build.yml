@@ -2,7 +2,8 @@ name: Build Desktop App
 on:
   push:
     branches:
-      - main # Atau master, sesuaikan dengan nama branch utama Mas Isa
+      - main
+      - master
 
 jobs:
   release:
@@ -21,5 +22,10 @@ jobs:
 
       - name: Build Electron App
         run: npm run dist
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifacts (Simpan file exe)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aplikasi-Microstock-Injector-Windows
+          path: dist/*.exe
+          retention-days: 7
