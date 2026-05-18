@@ -1,0 +1,25 @@
+name: Build Desktop App
+on:
+  push:
+    branches:
+      - main # Atau master, sesuaikan dengan nama branch utama Mas Isa
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Electron App
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
